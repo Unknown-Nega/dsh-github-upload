@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "GitHub 上传",
+    "description": "在 DeepSeek Harness 里直接把插件发布到 GitHub。从左栏的 GitHub 上传图标打开：用设备码 OAuth 或个人访问令牌（PAT）登录 GitHub，从当前 profile 的插件列表里选一个插件，先检查同名仓库或同名插件是否已存在，再决定怎么写。点「生成说明」时，会把该插件的 package.json、入口文件、cordis 补丁和语言包发给你当前配置的模型（经 Harness 的 LLM 服务），由它起草描述、README.md、docs/DETAIL.md、图标建议和关键词；每个字段都能改，也能中途停止、重新生成后再发布。发布会在 GitHub 新建仓库（默认私有），或按你审阅过的文件提交到已有仓库。不点「发布」不会有任何内容离开本机；GitHub 令牌存为凭据记录而非配置项，本地接口只监听回环地址。关闭插件会移除面板和接口，已保存的凭据保留到你主动断开登录。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "GitHub Upload",
+    "description": "Publish a plugin to GitHub from inside DeepSeek Harness. Open it from the GitHub Upload icon in the left rail: sign in with the device-code OAuth flow or a personal access token, pick a plugin from your profile, and check whether the repository or plugin name already exists before anything is written. The Generate docs step sends the selected plugin's package.json, entry file, cordis patch and locale files to your currently configured model (via the Harness LLM service) so it can draft a description, README.md, docs/DETAIL.md, an icon hint and keywords; you can edit every field, stop the stream, and regenerate before publishing. Publishing creates a repository (private by default) or commits to an existing one with the files you reviewed. Nothing leaves this machine until you press Publish, the GitHub token is stored as a credential record rather than in configuration, and the local routes only answer on loopback. Turn the plugin off to remove the panel and the routes; stored credentials stay until you disconnect.",
+    "detail": "docs/DETAIL.md"
+  }
+}
