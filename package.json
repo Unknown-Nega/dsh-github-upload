@@ -1,7 +1,7 @@
 {
   "name": "dsh-github-upload",
   "version": "0.1.0",
-  "description": "Sign in to GitHub, let AI write a plugin's README/DETAIL docs, then publish the plugin to a GitHub repository.",
+  "description": "在 DSH 内登录 GitHub、让当前模型生成插件说明，并把插件一次性发布到新仓库或已有仓库。",
   "icon": "icon.svg",
   "type": "module",
   "main": "lib/index.js",

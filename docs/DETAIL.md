@@ -1,1 +1,1 @@
-![A plugin moving from the local Harness profile through AI-written documentation into a GitHub repository](preview.svg)
+![插件从本地 Harness profile 经 AI 撰写说明后发布到 GitHub 仓库](preview.svg)

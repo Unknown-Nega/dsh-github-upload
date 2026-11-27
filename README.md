@@ -1,57 +1,54 @@
-# GitHub Upload
+# dsh-github-upload
 
-Publish a DeepSeek Harness plugin to GitHub from inside the Harness: sign in once, pick a plugin from your profile, let your current model write the documentation, then push the whole thing into a new repository.
+`dsh-github-upload` 0.1.0 让你在 DeepSeek Harness 里登录 GitHub，从当前 profile 选择一个插件，用正在使用的模型生成描述、`README.md`、`docs/DETAIL.md`、关键词和仓库名，检查同名后把插件发布到 GitHub 仓库。GitHub token 存为本机凭据，页面只通过回环接口访问宿主。
 
-Open it from the **GitHub Upload** icon in the left rail.
+## 它做什么
 
-## What it does
+面板有 **账号**、**插件**、**说明生成**、**发布** 四个页签，顺序对应一次发布。
 
-The panel has four tabs that follow the order of a real publish.
+- **账号**：用设备码 OAuth 或 PAT 登录；用 `GET /user` 校验令牌，并缓存账号名、头像、套餐和权限范围。下方的 **检查权限** 会问 GitHub 这个令牌能看到多少仓库、能否新建仓库。
+- **插件**：列出当前 Harness profile 里的插件（含 `link:` 安装），以及 `~/.dsh/plugins` 下的插件。
+- **说明生成**：把选中插件的 `package.json`、入口模块、客户端模块（如有）、`cordis.patch.yml` 和语言包发给当前模型，流式返回描述、`README.md`、只含一张图的 `docs/DETAIL.md`、关键词和仓库名；字段都能改，流能停。
+- **发布**：先检查同名仓库和同名插件，再按你的选择覆盖、改名或跳过；推送完成后给出仓库链接。上传通过 Git Data API 一次提交，要么完整出现，要么完全不出现。
 
-1. **Account** — sign in with GitHub, either way:
-   - **Device code (OAuth)**: paste an OAuth App's client ID once, the panel shows a code like `ABCD-1234` and a link, you approve it in the browser, and the panel picks the token up on its own.
-   - **Personal access token**: paste a fine-grained or classic token with `repo` scope.
+## 在界面哪里找到
 
-   Either way the token is checked with `GET /user` and the account name, avatar, plan and scopes are cached for the session.
+在 DSH 左侧栏点 **GitHub 上传** 图标，打开标题为 **发布插件到 GitHub** 的面板。页签在面板顶部；**检查权限** 在 **账号** 页的状态表下方，生成用的语言开关叫 **说明语言**，最终按钮是 **发布到 GitHub**。
 
-   Under the status table the panel shows the token type and a **Check permissions** button. It asks GitHub what this token can actually do — how many repositories it can see and whether it can create one — so a token that signs in fine but cannot create repositories is reported here instead of failing at the last step of a publish.
-2. **Plugin** — the panel lists the plugins in your current Harness profile, including `link:` installs, plus anything sitting in `~/.dsh/plugins`. Pick the one you want to publish.
-3. **Docs** — **Generate** sends the plugin's `package.json`, its entry module, its client module when there is one, its `cordis.patch.yml` and its locale files to the model you are already using in this Harness, and streams back a description, a `README.md`, a one-image `docs/DETAIL.md`, keywords and a repository name. Every field stays editable; the stream has a stop button. The **Description language** switch above the button picks Chinese or English and defaults to **Follow the interface**, so the docs come back in the language the panel is speaking; an explicit choice is remembered.
-4. **Publish** — the panel first asks GitHub whether a repository of that name already exists and whether a plugin of that name is published anywhere. You then choose to overwrite, rename, or stop. Pushing commits everything in one commit and prints the repository link.
+## 如何使用
 
-## How the upload is put together
+1. 打开 **账号**。设备码方式点 **设备码登录**，填入 OAuth App 的 **OAuth App Client ID**，点 **获取设备码**，在浏览器里打开授权页并输入面板给出的码；或切到 **访问令牌（PAT）**，粘贴令牌后点 **登录**。登录后点 **检查权限** 确认能新建仓库；点 **断开** 会删除保存的凭据。
+2. 打开 **插件**，选中要发布的插件。
+3. 打开 **说明生成**，确认 **说明语言**，点 **生成说明**。生成中可以点 **停止**；每个字段都能编辑，也可以点 **重新生成**。
+4. 打开 **发布**，填写 **账号 / 组织** 和 **仓库名**，按需要切换 **私有仓库** 与 **连同源码一起上传**，点 **检查同名** 并按结果选择 **覆盖（提交到默认分支）**、**另存新名** 或 **跳过**，最后点 **发布到 GitHub**。
 
-Files come from the plugin directory with junk and secrets filtered out: `node_modules`, `.git`, build output, `.env`, `.npmrc`, `.netrc`, private keys and anything over 512 KiB are skipped. The documented files you approved are layered on top, and `package.json` is written last so the description GitHub shows matches what you accepted.
+## 配置
 
-Everything lands in a single commit through the Git Data API (`git/trees` → `git/commits` → ref update), so an upload either appears completely or not at all.
+- **说明语言** 默认 **跟随界面**；手动选过之后会被记住。
+- **OAuth App Client ID** 只接受公开的 client id，粘贴令牌会被拒绝。设备码登录需要一个启用设备码流程的 OAuth App。
+- 令牌登录：经典令牌需要 `repo`；细粒度令牌需要 **Administration: Read and write**（或 **Repository creation: Read and write**），并在 **Repository access** 中选中目标仓库或 **All repositories**；账号卡片还需要 `read:user`。
+- 发布页的 **私有仓库** 默认开启。
+- 需要带有 `webServer` 服务的 DSH 构建；没有 `llm` 服务时登录和发布仍可用，但生成说明不可用。
+- token 存为 Harness 凭据记录，键是：
+```text
+dsh-github-upload/github
+```
+凭据服务不可用时回退到：
+```text
+~/.dsh/github-upload/github.json
+```
+权限为 `0600`。面板路由在：
+```text
+/api/dsh-github-upload/*
+```
+这些路由只绑定回环地址，**断开** 会删除凭据记录。
 
-## Where your token lives
+## 限制
 
-The token is stored as a Harness **credential record** under the key `dsh-github-upload/github` (`<scope>/<id>`, the only shape the credentials service accepts), never in the profile's `cordis.patch.yml` and never in a repository. When the credentials service is unavailable the plugin falls back to `~/.dsh/github-upload/github.json` with mode `0600`.
-
-Every route the panel talks to is served under `/api/dsh-github-upload/*`, bound to loopback only, and **Disconnect** deletes the record.
-
-## The only thing that leaves your machine
-
-Publishing. Signing in talks to `github.com`. Generating documentation sends the source files listed under **Docs** to the model provider your Harness is configured with — that call goes through the Harness's own `llm` service with the model you have selected, no other endpoint. Nothing is uploaded anywhere until you press **Publish**.
-
-## Requirements
-
-- A DeepSeek Harness build with the `webServer` service (the desktop and web builds both have it).
-- For device-code login: an OAuth App with device flow enabled, and its client ID.
-- For token login: a fine-grained token with **Administration: Read and write** (or the newer **Repository creation: Read and write**) under Repository permissions, and the target repository — or **All repositories** — selected under Repository access; a classic token needs the `repo` scope. Add `read:user` for the profile card.
-
-## Limits
-
-- One repository per publish; there is no branching strategy beyond the target repository's default branch.
-- The file list is capped at 200 files and the description at 350 characters.
-- Overwriting replaces the file set you upload, but does not delete files that exist only in the repository.
-- The **Generate** button is capped by the model's own output limit. A README that runs past it comes back as an error rather than a half-written file.
-
-## Notes
-
-- The **OAuth App client ID** field only accepts a public client id. Pasting a token there is refused, because that field is written to a plain settings file and echoed back by the status route.
-- A `403 Resource not accessible by personal access token` is a permission problem the token itself has to fix: the panel names the permission GitHub asked for (from `x-accepted-github-permissions`) and turns the fine-grained and classic cases into different instructions. This is why **Check permissions** exists: `GET /user` succeeding does not mean a token may create a repository.
-- Before publishing, every file's content is scanned: token-shaped strings (GitHub PATs, private-key headers, AWS/Slack/Stripe/Google/npm/OpenAI keys) are held back and the result names them. GitHub's push protection rejects the entire commit over one such file while saying only "Secret detected in content", with no file name — this scan is what puts the name in front of you. A regex written in prose, such as `/ghp_[A-Za-z0-9]+/`, is not a hit.
-- The panel chooses its own colours instead of inheriting `--dsw-alias-*` background tokens, so it stays readable under wallpaper and glass themes that make the host surfaces transparent.
-
+- 一次发布只对应一个仓库；不会使用目标仓库默认分支以外的分支策略。
+- 文件清单最多 200 个，仓库描述最多 350 字符。
+- 上传会跳过 `node_modules`、`.git`、构建产物、`.env`、`.npmrc`、`.netrc`、私钥文件和超过 512 KiB 的文件。
+- 覆盖只替换本次上传的文件集合，不会删除仅存在于仓库里的文件。
+- **生成说明** 会新增对当前模型的请求，把上述插件源码文件发给你在 Harness 中配置的模型提供方；受模型自身输出上限约束，README 超出上限会报错，不会写回半截文件。登录只与 `github.com` 通信，发布时文件内容会发往 GitHub；按 **发布到 GitHub** 前不会上传到 GitHub。
+- 发布前会扫描每个文件内容；token 形状的字符串会被扣下并在结果中列出。GitHub 的推送保护可能因一个文件拒收整个提交，且只报 `Secret detected in content`。
+- 关闭插件后，面板和 `/api/dsh-github-upload/*` 路由不再可用；已保存的凭据会保留，直到你点 **断开**。
